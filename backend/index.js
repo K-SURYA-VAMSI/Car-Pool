@@ -81,24 +81,54 @@ app.get('/protected/share', authenticateToken, (req, res) => {
 
 //store trips data
 app.post('/create-trip', authenticateToken, async (req, res) => {
-    const { from, to, departureDate, departureTime, spots, message } = req.body;
+    const { from, to, departureDate, departureTime, spots, price, message } = req.body;
 
     try {
+        // Validate required fields
+        if (!from || !to || !departureDate || !departureTime || !spots) {
+            return res.status(400).json({ 
+                message: 'Missing required fields',
+                required: { from, to, departureDate, departureTime, spots }
+            });
+        }
+
+        // Validate spots is a positive number
+        const spotsNum = parseInt(spots);
+        if (isNaN(spotsNum) || spotsNum <= 0) {
+            return res.status(400).json({ message: 'Spots must be a positive number' });
+        }
+
+        // Validate price
+        const priceNum = parseFloat(price) || 0;
+        if (isNaN(priceNum) || priceNum < 0) {
+            return res.status(400).json({ message: 'Price must be a non-negative number' });
+        }
+
+        // Create the departure datetime
+        const departureDatetime = new Date(`${departureDate}T${departureTime}`);
+        if (isNaN(departureDatetime.getTime())) {
+            return res.status(400).json({ message: 'Invalid date or time format' });
+        }
+
         const trip = await prisma.share.create({
             data: {
-                driverId: req.user.id, 
+                driverId: req.user.id,
                 origin: from,
                 destination: to,
-                departureTime: new Date(`${departureDate}T${departureTime}`),
-                spots: parseInt(spots),
+                departureTime: departureDatetime,
+                spots: spotsNum,
+                price: priceNum,
                 message: message || null,
             },
         });
 
         res.status(201).json({ message: 'Trip created successfully', trip });
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        console.error('Error creating trip:', error);
+        res.status(500).json({ 
+            message: 'Internal Server Error',
+            error: error.message 
+        });
     }
 });
 

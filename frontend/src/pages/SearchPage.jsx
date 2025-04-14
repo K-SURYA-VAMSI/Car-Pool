@@ -233,24 +233,41 @@ function SearchPage() {
           <h3 className="text-md font-semibold mb-2">Search Results</h3>
           {searchResults.length > 0 ? (
             searchResults.map((ride, index) => (
-              <div key={index} className="border p-2 mb-2">
-                <p>From: {ride.origin}</p>
-                <p>To: {ride.destination}</p>
-                <p>Date: {new Date(ride.departureTime).toLocaleString()}</p>
-                <p>Spots Available: {ride.spots}</p>
-                <p>
-                  Driver: {ride.driver.firstName} {ride.driver.lastName}
+              <div key={index} className="border p-4 mb-4 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-semibold">From: {ride.origin}</p>
+                    <p className="font-semibold">To: {ride.destination}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-600">₹{ride.price}</p>
+                    <p className="text-sm text-gray-500">per person</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <p className="text-sm">
+                    <span className="text-gray-600">Date: </span>
+                    {new Date(ride.departureTime).toLocaleString()}
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-gray-600">Spots: </span>
+                    {ride.spots}
+                  </p>
+                </div>
+                <p className="text-sm mb-3">
+                  <span className="text-gray-600">Driver: </span>
+                  {ride.driver.firstName} {ride.driver.lastName}
                 </p>
                 <button
                   onClick={() => handleRequestRide(ride.id)}
-                  className="mt-2 bg-green-500 text-white px-3 py-1 rounded"
+                  className="w-full bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
                 >
                   Request Ride
                 </button>
               </div>
             ))
           ) : (
-            <p>No rides found</p>
+            <p className="text-gray-500 text-center">No rides found</p>
           )}
         </div>
       </div>

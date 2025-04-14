@@ -13,6 +13,7 @@ const ShareForm = () => {
     departureDate: "",
     departureTime: "",
     spots: "",
+    price: "",
     message: "",
   });
 
@@ -215,6 +216,20 @@ const ShareForm = () => {
             value={formData.spots}
             onChange={handleChange}
             placeholder="Number of spots"
+            min="1"
+            className="w-full p-2 mt-1 border rounded-md"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700">Price per Person (₹)</label>
+          <input
+            type="number"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            placeholder="Enter price"
+            min="0"
+            step="0.01"
             className="w-full p-2 mt-1 border rounded-md"
           />
         </div>

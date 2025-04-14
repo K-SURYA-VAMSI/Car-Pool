@@ -33,6 +33,7 @@ model Share {
   destination     String
   departureTime   DateTime
   spots           Int
+  price           Float    @default(0)
   message         String?
 
   driver          User     @relation(fields: [driverId], references: [id])
