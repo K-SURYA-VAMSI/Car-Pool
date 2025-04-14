@@ -4,13 +4,23 @@ import { PrismaClient } from '@prisma/client'; //prisma/client
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
+import adminRoutes from './routes/admin.js';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(); 
 
-const JWT_SECRET = "my_jwt_secret"; 
+const JWT_SECRET = process.env.JWT_SECRET || "abcd1234";
 
-app.use(cors());  
+// Configure CORS
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());  
 
 // Middleware to verify JWT
@@ -148,7 +158,7 @@ app.post('/request-ride', authenticateToken, async (req, res) => {
     }
 });
 
-//for trips 
+// Get driving trips
 app.get('/trips/driving', authenticateToken, async (req, res) => {
     try {
       const trips = await prisma.share.findMany({
@@ -157,16 +167,12 @@ app.get('/trips/driving', authenticateToken, async (req, res) => {
           requests: {
             include: {
               user: {
-                select: { firstName: true, lastName: true }, // Fetch only necessary fields
+                select: { firstName: true, lastName: true },
               },
             },
           },
         },
       });
-  
-      if (!trips.length) {
-        return res.status(200).json([]); // Return an empty array if no trips found
-      }
   
       res.status(200).json(trips);
     } catch (error) {
@@ -175,82 +181,76 @@ app.get('/trips/driving', authenticateToken, async (req, res) => {
     }
   });
   
-  
-
-  app.get('/trips/ride-requests', authenticateToken, async (req, res) => {
+  // Get riding trips (where user is a passenger)
+  app.get('/trips/riding', authenticateToken, async (req, res) => {
     try {
       const requests = await prisma.request.findMany({
-        where: {
-          share: { driverId: req.user.id },
+        where: { 
+          userId: req.user.id 
         },
         include: {
-          share: true, // Include trip details
-          user: {
-            select: { firstName: true, lastName: true }, // Include rider details
-          },
-        },
+          share: {
+            include: {
+              driver: {
+                select: { 
+                  firstName: true, 
+                  lastName: true 
+                }
+              }
+            }
+          }
+        }
       });
-  
-      if (!requests.length) {
-        return res.status(200).json([]); // Return empty array if no requests
-      }
   
       res.status(200).json(requests);
     } catch (error) {
-      console.error('Error fetching ride requests:', error.message);
+      console.error('Error fetching riding trips:', error.message);
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
-  
 
-  app.get('/trips/riding', authenticateToken, async (req, res) => {
-    try {
-      const ridingRequests = await prisma.request.findMany({
-        where: { userId: req.user.id },
-        include: {
-          share: {
-            select: { origin: true, destination: true, departureTime: true },
-          },
-        },
-      });
-  
-      if (!ridingRequests.length) {
-        return res.status(200).json([]); // Return empty array if no riding requests
-      }
-  
-      res.status(200).json(ridingRequests);
-    } catch (error) {
-      console.error('Error fetching riding requests:', error.message);
-      res.status(500).json({ message: 'Internal Server Error' });
-    }
-  });
-  
-  
-
-  app.patch('/requests/:id/status', authenticateToken, async (req, res) => {
-    const { id } = req.params;
+  // Update request status
+  app.patch('/requests/:requestId/status', authenticateToken, async (req, res) => {
+    const { requestId } = req.params;
     const { status } = req.body;
-  
-    // Validate status
-    if (!['PENDING', 'APPROVED', 'DECLINED'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
-    }
-  
+
     try {
-      const request = await prisma.request.update({
-        where: { id: parseInt(id) },
-        data: { status },
+      // Verify the user is the driver of the trip
+      const request = await prisma.request.findUnique({
+        where: { id: parseInt(requestId) },
+        include: { share: true }
       });
-  
+
       if (!request) {
         return res.status(404).json({ message: 'Request not found' });
       }
-  
-      res.status(200).json({ message: 'Request status updated successfully', request });
+
+      if (request.share.driverId !== req.user.id) {
+        return res.status(403).json({ message: 'Not authorized to update this request' });
+      }
+
+      const updatedRequest = await prisma.request.update({
+        where: { id: parseInt(requestId) },
+        data: { status }
+      });
+
+      // If request is approved, decrease available spots
+      if (status === 'APPROVED') {
+        await prisma.share.update({
+          where: { id: request.shareId },
+          data: { spots: { decrement: 1 } }
+        });
+      }
+
+      res.json(updatedRequest);
     } catch (error) {
-      console.error('Error updating request status:', error.message);
+      console.error('Error updating request status:', error);
       res.status(500).json({ message: 'Internal Server Error' });
     }
   });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+// Admin routes
+app.use('/api/admin', adminRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

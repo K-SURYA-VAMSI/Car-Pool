@@ -92,7 +92,7 @@ function SearchPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:3000/search-rides?from=${formData.from}&to=${formData.to}&date=${formData.date}`,
+        `http://localhost:5000/search-rides?from=${formData.from}&to=${formData.to}&date=${formData.date}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -114,7 +114,7 @@ function SearchPage() {
   const handleRequestRide = async (rideId) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3000/request-ride", {
+      const response = await fetch("http://localhost:5000/request-ride", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -98,7 +98,7 @@ const ShareForm = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:3000/create-trip",
+        "http://localhost:5000/create-trip",
         formData,
         {
           headers: {

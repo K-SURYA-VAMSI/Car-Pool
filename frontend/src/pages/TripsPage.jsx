@@ -12,7 +12,7 @@ const TripsPage = () => {
     setLoadingDriving(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:3000/trips/driving', {
+      const response = await fetch('http://localhost:5000/trips/driving', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -36,7 +36,7 @@ const TripsPage = () => {
     setLoadingRiding(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:3000/trips/riding', {
+      const response = await fetch('http://localhost:5000/trips/riding', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -57,7 +57,7 @@ const TripsPage = () => {
   // Handle request status change
   const handleRequestStatusChange = async (requestId, status) => {
     try {
-      const response = await fetch(`http://localhost:3000/requests/${requestId}/status`, {
+      const response = await fetch(`http://localhost:5000/requests/${requestId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

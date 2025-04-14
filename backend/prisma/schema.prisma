@@ -21,6 +21,7 @@ model User {
   password       String
   driverLicense  String
   gender         String
+  role           UserRole   @default(USER)
   shares         Share[]  // Relation to Share table
   requests       Request[] // Relation to Request table
 }
@@ -54,6 +55,11 @@ enum RequestStatus {
   PENDING
   APPROVED
   DECLINED
+}
+
+enum UserRole {
+  ADMIN
+  USER
 }
 
 //docker run --name my_postgres -e POSTGRES_USER=ayush -e POSTGRES_PASSWORD=rawat -e POSTGRES_DB=mydb -p 5432:5432 -d postgres
